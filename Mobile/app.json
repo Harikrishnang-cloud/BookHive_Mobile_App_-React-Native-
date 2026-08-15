@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Todo Mobile App",
+    "slug": "todo-mobile",
+    "version": "1.0.0",
+    "scheme": "todomobile",
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
