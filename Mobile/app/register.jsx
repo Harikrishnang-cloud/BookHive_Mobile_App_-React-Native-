@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Link } from 'expo-router';
 import { register } from '../src/services/auth.service';
-import { createUserProfile } from '../src/services/user.service';
+import { syncUserProfileWithBackend } from '../src/services/user.service';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Register() {
@@ -26,8 +26,9 @@ export default function Register() {
     setLoading(true);
     try {
       const userCredential = await register(email, password);
-      // Create user profile in Firestore
-      await createUserProfile(userCredential.user.uid, { name, email });
+      const idToken = await userCredential.user.getIdToken();
+      // Sync user profile in backend Firestore
+      await syncUserProfileWithBackend(idToken, name);
       // Layout handles redirect
     } catch (error) {
       Alert.alert('Registration Failed', error.message);
@@ -257,6 +258,5 @@ const styles = StyleSheet.create({
     color: '#52c6b4',
     fontSize: 14,
     fontWeight: '600',
-    textDecorationLine: 'underline',
   }
 });

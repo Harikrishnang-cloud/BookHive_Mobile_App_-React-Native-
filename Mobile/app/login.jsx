@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Image, TouchableOpacity } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { login } from '../src/services/auth.service';
+import { syncUserProfileWithBackend } from '../src/services/user.service';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Login() {
@@ -9,6 +10,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [agree, setAgree] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -18,7 +20,9 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      await login(email, password);
+      const userCredential = await login(email, password);
+      const idToken = await userCredential.user.getIdToken();
+      await syncUserProfileWithBackend(idToken);
       // Layout handles redirect
     } catch (error) {
       Alert.alert('Login Failed', error.message);
@@ -30,20 +34,40 @@ export default function Login() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Image source={require('../assets/images/logo_splash.png')} style={styles.logo} resizeMode="contain"/>
+        <Image source={require('../assets/images/logo_splash.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Log in Your Account</Text>
       </View>
       
       <View style={styles.formContainer}>
-        <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholderTextColor="#999"/>
+        <TextInput 
+          style={styles.input} 
+          placeholder="Email" 
+          value={email} 
+          onChangeText={setEmail} 
+          autoCapitalize="none" 
+          keyboardType="email-address" 
+          placeholderTextColor="#999" 
+        />
+        
         <View style={styles.passwordContainer}>
-          <TextInput style={styles.passwordInput} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} placeholderTextColor="#999"/>
+          <TextInput 
+            style={styles.passwordInput} 
+            placeholder="Password" 
+            value={password} 
+            onChangeText={setPassword} 
+            secureTextEntry={!showPassword} 
+            placeholderTextColor="#999" 
+          />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
             <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#999" />
           </TouchableOpacity>
         </View>
         
-        <View style={styles.forgotPasswordContainer}>
+        <View style={styles.optionsContainer}>
+          <TouchableOpacity style={styles.checkboxContainer} onPress={() => setAgree(!agree)}>
+            <Ionicons name={agree ? "checkbox" : "square-outline"} size={20} color={agree ? "#0e6b56" : "#999"} />
+            <Text style={styles.rememberMeText}>Remember me</Text>
+          </TouchableOpacity>
           <Link href="/forgot-password" style={styles.forgotPasswordText}>Forget Password?</Link>
         </View>
         
@@ -129,9 +153,20 @@ const styles = StyleSheet.create({
   eyeIcon: {
     padding: 15,
   },
-  forgotPasswordContainer: {
-    alignItems: 'flex-end',
+  optionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 25,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rememberMeText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#333',
   },
   forgotPasswordText: {
     color: '#52c6b4',
@@ -181,6 +216,5 @@ const styles = StyleSheet.create({
     color: '#52c6b4',
     fontSize: 14,
     fontWeight: '600',
-    textDecorationLine: 'underline',
   }
 });
