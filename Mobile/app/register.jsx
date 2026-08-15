@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, Alert, ActivityIndicator, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Link } from 'expo-router';
-import { register } from '../src/services/auth.service';
+import { useRouter } from 'expo-router';
+import { register, logout } from '../src/services/auth.service';
 import { syncUserProfileWithBackend } from '../src/services/user.service';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Register() {
+  const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +31,11 @@ export default function Register() {
       const idToken = await userCredential.user.getIdToken();
       // Sync user profile in backend Firestore
       await syncUserProfileWithBackend(idToken, name);
-      // Layout handles redirect
+
+      // Force user to log in manually after sign up
+      await logout();
+      Alert.alert('Success', 'Account created! Please log in.');
+      router.replace('/login');
     } catch (error) {
       Alert.alert('Registration Failed', error.message);
     } finally {
@@ -41,47 +47,25 @@ export default function Register() {
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Image 
-            source={require('../assets/images/onboarding_1.png')} 
+          <Image
+            source={require('../assets/images/onboarding_1.png')}
             style={styles.illustration}
             resizeMode="contain"
           />
           <Text style={styles.title}>Join Us Now</Text>
         </View>
-        
-        <View style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            value={name}
-            onChangeText={setName}
-            placeholderTextColor="#999"
-          />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholderTextColor="#999"
-          />
-          
+        <View style={styles.formContainer}>
+          <TextInput style={styles.input} placeholder="Username" value={name} onChangeText={setName} placeholderTextColor="#999" />
+          <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholderTextColor="#999" />
+
           <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              placeholderTextColor="#999"
-            />
+            <TextInput style={styles.passwordInput} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} placeholderTextColor="#999" />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
               <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#999" />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.checkboxContainer}>
             <TouchableOpacity onPress={() => setAgree(!agree)} style={styles.checkbox}>
               <Ionicons name={agree ? "checkbox" : "square-outline"} size={20} color={agree ? "#0e6b56" : "#999"} />
@@ -90,7 +74,7 @@ export default function Register() {
               I Agree with <Text style={styles.highlightText}>Privacy and Policy</Text>
             </Text>
           </View>
-          
+
           <Pressable style={[styles.button, loading && styles.disabledButton]} onPress={handleRegister} disabled={loading}>
             {loading ? (
               <ActivityIndicator color="white" />
@@ -100,15 +84,15 @@ export default function Register() {
           </Pressable>
 
           <View style={styles.dividerContainer}>
-             <View style={styles.dividerLine} />
-             <Text style={styles.dividerText}>or</Text>
-             <View style={styles.dividerLine} />
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
           </View>
 
           <View style={styles.socialContainer}>
             <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/images/google-logo.png')} style={{ width: 24, height: 24 }} />
-          </TouchableOpacity>
+              <Image source={require('../assets/images/google-logo.png')} style={{ width: 24, height: 24 }} />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.socialButton}>
               <Image source={require('../assets/images/apple-logo.png')} style={{ width: 24, height: 24 }} />
             </TouchableOpacity>

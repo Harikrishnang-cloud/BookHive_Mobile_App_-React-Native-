@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, AuthContext } from '../src/context/AuthContext';
+import { WishlistProvider } from '../src/context/WishlistContext';
 import { View, ActivityIndicator } from 'react-native';
 import { useContext } from 'react';
 
@@ -12,15 +14,17 @@ function RootLayoutNav() {
   useEffect(() => {
     if (loading) return;
 
-    const inAuthGroup = segments[0] === '(auth)' || 
-                        segments.includes('login') || 
-                        segments.includes('register') || 
-                        segments.includes('forgot-password') ||
-                        segments.includes('onboarding');
+    const inAuthGroup = segments[0] === '(auth)' ||
+      segments.includes('login') ||
+      segments.includes('register') ||
+      segments.includes('forgot-password') ||
+      segments.includes('onboarding');
+
+    const isRegister = segments.includes('register');
 
     if (!firebaseUser && !inAuthGroup) {
       router.replace('/onboarding');
-    } else if (firebaseUser && inAuthGroup) {
+    } else if (firebaseUser && inAuthGroup && !isRegister) {
       router.replace('/');
     }
   }, [firebaseUser, segments, loading]);
@@ -34,21 +38,26 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ title: 'Home' }} />
-      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-      <Stack.Screen name="login" options={{ title: 'Login', headerShown: false }} />
-      <Stack.Screen name="register" options={{ title: 'Register', headerShown: false }} />
-      <Stack.Screen name="forgot-password" options={{ title: 'Forgot Password', headerShown: false }} />
-      <Stack.Screen name="change-password" options={{ title: 'Change Password', headerShown: false }} />
-    </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack>
+        <Stack.Screen name="index" options={{ title: 'Home', headerShown: false }} />
+        <Stack.Screen name="wishlist" options={{ title: 'Wishlist', headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ headerShown: false }} />
+        <Stack.Screen name="forgot-password" options={{ headerShown: false }} />
+        <Stack.Screen name="change-password" options={{ headerShown: false }} />
+      </Stack>
+    </GestureHandlerRootView>
   );
 }
 
 export default function Layout() {
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <WishlistProvider>
+        <RootLayoutNav />
+      </WishlistProvider>
     </AuthProvider>
   );
 }

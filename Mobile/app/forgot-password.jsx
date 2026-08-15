@@ -27,34 +27,17 @@ export default function ForgotPassword() {
     <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Image 
-            source={require('../assets/images/onboarding_globe.png')} 
-            style={styles.illustration}
-            resizeMode="contain"
-          />
+          <Image source={require('../assets/images/onboarding_globe.png')} style={styles.illustration} resizeMode="contain"/>
         </View>
         
         <View style={styles.formContainer}>
-          <Text style={styles.label}>Enter Mail or Phone number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholderTextColor="#999"
-          />
-          
-          <Pressable 
-            style={[styles.button, loading && styles.disabledButton]} 
-            onPress={handleReset}
-            disabled={loading}
-          >
+          <Text style={styles.label}>Enter Your Email</Text>
+          <TextInput style={styles.input} placeholder="Enter Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholderTextColor="#999"/>
+          <Pressable style={[styles.button, loading && styles.disabledButton]} onPress={handleReset} disabled={loading}>
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text style={styles.buttonText}>Send Code</Text>
+              <Text style={styles.buttonText}>Send Reset Link</Text>
             )}
           </Pressable>
 
@@ -129,6 +112,5 @@ const styles = StyleSheet.create({
     color: '#52c6b4',
     fontSize: 16,
     fontWeight: '600',
-    textDecorationLine: 'underline',
   }
 });

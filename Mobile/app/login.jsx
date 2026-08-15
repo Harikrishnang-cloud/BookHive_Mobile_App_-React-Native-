@@ -37,32 +37,32 @@ export default function Login() {
         <Image source={require('../assets/images/logo_splash.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>Log in Your Account</Text>
       </View>
-      
+
       <View style={styles.formContainer}>
-        <TextInput 
-          style={styles.input} 
-          placeholder="Email" 
-          value={email} 
-          onChangeText={setEmail} 
-          autoCapitalize="none" 
-          keyboardType="email-address" 
-          placeholderTextColor="#999" 
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          placeholderTextColor="#999"
         />
-        
+
         <View style={styles.passwordContainer}>
-          <TextInput 
-            style={styles.passwordInput} 
-            placeholder="Password" 
-            value={password} 
-            onChangeText={setPassword} 
-            secureTextEntry={!showPassword} 
-            placeholderTextColor="#999" 
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            placeholderTextColor="#999"
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
             <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#999" />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.optionsContainer}>
           <TouchableOpacity style={styles.checkboxContainer} onPress={() => setAgree(!agree)}>
             <Ionicons name={agree ? "checkbox" : "square-outline"} size={20} color={agree ? "#0e6b56" : "#999"} />
@@ -70,9 +70,9 @@ export default function Login() {
           </TouchableOpacity>
           <Link href="/forgot-password" style={styles.forgotPasswordText}>Forget Password?</Link>
         </View>
-        
-        <Pressable 
-          style={[styles.button, loading && styles.disabledButton]} 
+
+        <Pressable
+          style={[styles.button, loading && styles.disabledButton]}
           onPress={handleLogin}
           disabled={loading}
         >
