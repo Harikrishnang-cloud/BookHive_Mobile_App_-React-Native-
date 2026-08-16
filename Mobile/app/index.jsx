@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, Image, SafeAreaView, Dimensions, Platform } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, TextInput, ScrollView, FlatList, Image, SafeAreaView, Dimensions, Platform, Animated, Easing, ImageBackground } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { logout } from '../src/services/auth.service';
@@ -7,11 +7,19 @@ import { useWishlist } from '../src/context/WishlistContext';
 import { useCart } from '../src/context/CartContext';
 import { getBooks } from '../src/services/book.service';
 import SideMenu from '../src/components/SideMenu';
-import { useEffect } from 'react';
-
 const { width } = Dimensions.get('window');
 
 const CATEGORIES = ['Popular','Fiction','Technology','Science','Business','Self Help','Biography','Education','Mystery','Romance'];
+
+const TRENDING_CATEGORIES = [
+  { id: '1', title: 'School', subcategories: 'Textbooks, Guides', image: require('../Public/Home/Trending/School.webp') },
+  { id: '2', title: 'College', subcategories: 'Engineering, Medical', image: require('../Public/Home/Trending/College.webp') },
+  { id: '3', title: 'Coaching', subcategories: 'Competitive Exams', image: require('../Public/Home/Trending/Coaching.webp') },
+  { id: '4', title: 'Health', subcategories: 'Fitness, Diet', image: require('../Public/Home/Trending/Health.webp') },
+  { id: '5', title: 'Novels', subcategories: 'Fiction, Romance', image: require('../Public/Home/Trending/Novels.webp') },
+  { id: '6', title: 'Science', subcategories: 'Physics, Biology', image: require('../Public/Home/Trending/Science.webp') },
+  { id: '7', title: 'Self Help', subcategories: 'Motivation, Success', image: require('../Public/Home/Trending/Self.webp') },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -22,6 +30,27 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const unreadNotifications = 3; // Mock value for unread notifications
+  const trendingListRef = useRef(null);
+  const scrollOffset = useRef(0);
+  const isScrolling = useRef(true);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (isScrolling.current && trendingListRef.current) {
+        scrollOffset.current += 1.5; // Slower, smoother speed
+        
+        // 7 items * (150 width + 12 marginRight) = 1134 width per full set
+        if (scrollOffset.current >= 1134) {
+           scrollOffset.current = 0;
+           trendingListRef.current.scrollToOffset({ offset: 0, animated: false });
+        } else {
+           trendingListRef.current.scrollToOffset({ offset: scrollOffset.current, animated: false });
+        }
+      }
+    }, 19); // ~60 FPS
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -157,6 +186,35 @@ export default function Home() {
           ))}
         </ScrollView>
 
+        {/* Trending Categories Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Trending Categories</Text>
+          <FlatList
+            ref={trendingListRef}
+            data={[...TRENDING_CATEGORIES, ...TRENDING_CATEGORIES, ...TRENDING_CATEGORIES]} // Triple to ensure seamless looping
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.trendingContent}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            scrollEnabled={true}
+            onScrollBeginDrag={() => { isScrolling.current = false; }} // Pause on drag
+            onScrollEndDrag={() => { isScrolling.current = true; }}    // Resume after drag
+            renderItem={({ item: category }) => (
+              <Pressable 
+                style={styles.trendingCard}
+                onPress={() => console.log('Clicked', category.title)} // Retains clickability
+              >
+                <ImageBackground source={category.image} style={styles.trendingImage} imageStyle={{ borderRadius: 10 }}>
+                  <View style={styles.trendingTextOverlay}>
+                    <Text style={styles.trendingTitle}>{category.title}</Text>
+                    <Text style={styles.trendingSub} numberOfLines={1}>{category.subcategories}</Text>
+                  </View>
+                </ImageBackground>
+              </Pressable>
+            )}
+          />
+        </View>
+
         {/* New Book Section */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>New Book</Text>
@@ -185,6 +243,10 @@ export default function Home() {
           <Ionicons name="home-outline" size={24} color="#0e6b56" />
           <Text style={styles.tabText}>Home</Text>
         </Pressable>
+        <Pressable style={styles.tabItem}>
+          <Ionicons name="book-outline" size={24} color="#999" />
+          <Text style={styles.tabTextIdle}>My Books</Text>
+        </Pressable>
 
         {/* Floating Action Button for Upload */}
         <View style={styles.fabWrapper}>
@@ -195,6 +257,11 @@ export default function Home() {
           </Pressable>
           <Text style={styles.fabText}>Upload</Text>
         </View>
+
+        <Pressable style={ styles.tabItem}>
+          <Ionicons name="list-outline" size={24} color="#999" />
+          <Text style={styles.tabTextIdle}>Category</Text>
+        </Pressable>
 
         {/* Tapping Profile logs out for now to ensure we don't lose that functionality */}
         <Pressable style={styles.tabItem} onPress={handleLogout}>
@@ -307,6 +374,43 @@ const styles = StyleSheet.create({
   },
   sectionContainer: {
     marginBottom: 25,
+  },
+  trendingContent: {
+    paddingHorizontal: 20,
+    gap: 0,
+  },
+  trendingCard: {
+    width: 150,
+    height: 190,
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 4,
+    borderRadius:10,
+  },
+  trendingImage: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  trendingTextOverlay: {
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    padding: 8,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+  },
+  trendingTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  trendingSub: {
+    fontSize: 12,
+    color: '#e0e0e0',
+    fontWeight: '500',
   },
   sectionTitle: {
     fontSize: 22,

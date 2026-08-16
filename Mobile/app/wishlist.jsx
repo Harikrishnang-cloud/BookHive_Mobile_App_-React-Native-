@@ -21,7 +21,7 @@ export default function Wishlist() {
       <View style={styles.imageContainer}>
         <Image source={{ uri: book.image }} style={styles.bookImage} resizeMode="contain" />
       </View>
-      
+
       <View style={styles.bookDetails}>
         <Text style={styles.bookTitle} numberOfLines={1}>{book.title}</Text>
         <Text style={styles.bookPrice}>Price: <Text style={styles.priceBold}>{book.price}</Text></Text>
@@ -29,7 +29,7 @@ export default function Wishlist() {
           <Text style={styles.addToCartText}>Add to cart</Text>
         </Pressable>
       </View>
-      
+
       <View style={styles.actionButtons}>
         <Pressable style={styles.iconButton}>
           <Ionicons name="share-social-outline" size={22} color="#666" />

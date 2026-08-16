@@ -1,8 +1,5 @@
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut,
-  sendPasswordResetEmail,
+import {
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail,
   updatePassword
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
