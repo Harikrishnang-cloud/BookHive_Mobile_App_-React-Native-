@@ -5,27 +5,19 @@ import { useRouter } from 'expo-router';
 import { logout } from '../src/services/auth.service';
 import { useWishlist } from '../src/context/WishlistContext';
 import { useCart } from '../src/context/CartContext';
-import { getBooks } from '../src/services/book.service';
+import { getBooks, getCategories } from '../src/services/book.service';
 import SideMenu from '../src/components/SideMenu';
 const { width } = Dimensions.get('window');
 
-const CATEGORIES = ['Popular','Fiction','Technology','Science','Business','Self Help','Biography','Education','Mystery','Romance'];
-
-const TRENDING_CATEGORIES = [
-  { id: '1', title: 'School', subcategories: 'Textbooks, Guides', image: require('../Public/Home/Trending/School.webp') },
-  { id: '2', title: 'College', subcategories: 'Engineering, Medical', image: require('../Public/Home/Trending/College.webp') },
-  { id: '3', title: 'Coaching', subcategories: 'Competitive Exams', image: require('../Public/Home/Trending/Coaching.webp') },
-  { id: '4', title: 'Health', subcategories: 'Fitness, Diet', image: require('../Public/Home/Trending/Health.webp') },
-  { id: '5', title: 'Novels', subcategories: 'Fiction, Romance', image: require('../Public/Home/Trending/Novels.webp') },
-  { id: '6', title: 'Science', subcategories: 'Physics, Biology', image: require('../Public/Home/Trending/Science.webp') },
-  { id: '7', title: 'Self Help', subcategories: 'Motivation, Success', image: require('../Public/Home/Trending/Self.webp') },
-];
+// Dynamic categories are now loaded from the backend
 
 export default function Home() {
   const router = useRouter();
   const { toggleWishlist, isInWishlist, wishlist } = useWishlist();
   const { cartItems, addToCart, cartItemCount } = useCart();
   const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState(['Popular', 'Fiction', 'Technology']);
+  const [trendingCategories, setTrendingCategories] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
@@ -53,15 +45,25 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const fetchBooks = async () => {
+    const fetchData = async () => {
       try {
         const data = await getBooks();
         setBooks(data);
+        
+        const cats = await getCategories();
+        const mainCats = cats.filter(c => c.type === 'main' && c.isActive).map(c => c.name);
+        if (mainCats.length > 0) {
+          setCategories(mainCats);
+          setActiveCategory(mainCats[0]);
+        }
+        
+        const trendCats = cats.filter(c => c.type === 'trending' && c.isActive);
+        setTrendingCategories(trendCats);
       } catch (error) {
-        console.error('Failed to fetch books', error);
+        console.error('Failed to fetch data', error);
       }
     };
-    fetchBooks();
+    fetchData();
   }, []);
 
   const filteredNewBooks = books.filter(book => book.condition === 'New' && book.title.toLowerCase().includes(searchQuery.toLowerCase()));  
@@ -168,7 +170,7 @@ export default function Home() {
 
         {/* Categories */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer} contentContainerStyle={styles.categoriesContent}>
-          {CATEGORIES.map(category => (
+          {categories.map(category => (
             <Pressable
               key={category}
               style={[
@@ -187,11 +189,12 @@ export default function Home() {
         </ScrollView>
 
         {/* Trending Categories Section */}
+        {trendingCategories.length > 0 && (
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Trending Categories</Text>
           <FlatList
             ref={trendingListRef}
-            data={[...TRENDING_CATEGORIES, ...TRENDING_CATEGORIES, ...TRENDING_CATEGORIES]} // Triple to ensure seamless looping
+            data={[...trendingCategories, ...trendingCategories, ...trendingCategories]} // Triple to ensure seamless looping
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.trendingContent}
@@ -204,16 +207,17 @@ export default function Home() {
                 style={styles.trendingCard}
                 onPress={() => console.log('Clicked', category.title)} // Retains clickability
               >
-                <ImageBackground source={category.image} style={styles.trendingImage} imageStyle={{ borderRadius: 10 }}>
+                <ImageBackground source={{ uri: category.image || 'https://via.placeholder.com/150' }} style={styles.trendingImage} imageStyle={{ borderRadius: 10 }}>
                   <View style={styles.trendingTextOverlay}>
-                    <Text style={styles.trendingTitle}>{category.title}</Text>
-                    <Text style={styles.trendingSub} numberOfLines={1}>{category.subcategories}</Text>
+                    <Text style={styles.trendingTitle}>{category.name}</Text>
+                    <Text style={styles.trendingSub} numberOfLines={1}>{category.icon || 'Category'}</Text>
                   </View>
                 </ImageBackground>
               </Pressable>
             )}
           />
         </View>
+        )}
 
         {/* New Book Section */}
         <View style={styles.sectionContainer}>

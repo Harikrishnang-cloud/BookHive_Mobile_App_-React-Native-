@@ -15,3 +15,11 @@ export const getBookById = async (id) => {
   }
   return response.json();
 };
+
+export const getCategories = async () => {
+  const response = await fetch(`${apiUrl}/api/categories`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch categories');
+  }
+  return response.json();
+};
