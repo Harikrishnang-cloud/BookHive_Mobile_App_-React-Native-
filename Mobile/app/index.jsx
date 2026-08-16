@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { logout } from '../src/services/auth.service';
 import { useWishlist } from '../src/context/WishlistContext';
+import SideMenu from '../src/components/SideMenu';
 
 const { width } = Dimensions.get('window');
 
@@ -28,6 +29,7 @@ export default function Home() {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const [activeCategory, setActiveCategory] = useState('Popular');
   const [searchQuery, setSearchQuery] = useState('');
+  const [menuVisible, setMenuVisible] = useState(false);
   const filteredNewBooks = NEW_BOOKS.filter(book => book.title.toLowerCase().includes(searchQuery.toLowerCase()));  
   const filteredOldBooks = OLD_BOOKS.filter(book => book.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -61,11 +63,18 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <SideMenu 
+        visible={menuVisible} 
+        onClose={() => setMenuVisible(false)} 
+        router={router} 
+        handleLogout={handleLogout} 
+      />
+
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Header */}
         <View style={styles.header}>
-          <Pressable>
+          <Pressable onPress={() => setMenuVisible(true)}>
             <Ionicons name="menu-outline" size={32} color="#999" />
           </Pressable>
           <View style={styles.headerRight}>
