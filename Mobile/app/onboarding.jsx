@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Dimensions, Image, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 const TEAL = '#0f7f75';
@@ -72,7 +73,10 @@ export default function Onboarding() {
               
               <Pressable 
                 style={styles.button}
-                onPress={() => router.push('/login')}
+                onPress={async () => {
+                  await AsyncStorage.setItem('@has_completed_onboarding', 'true');
+                  router.push('/login');
+                }}
               >
                 <Text style={styles.buttonText}>Log In</Text>
               </Pressable>

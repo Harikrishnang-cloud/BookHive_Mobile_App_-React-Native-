@@ -4,34 +4,39 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { logout } from '../src/services/auth.service';
 import { useWishlist } from '../src/context/WishlistContext';
+import { useCart } from '../src/context/CartContext';
+import { getBooks } from '../src/services/book.service';
 import SideMenu from '../src/components/SideMenu';
+import { useEffect } from 'react';
 
 const { width } = Dimensions.get('window');
 
 const CATEGORIES = ['Popular','Fiction','Technology','Science','Business','Self Help','Biography','Education','Mystery','Romance'];
-const NEW_BOOKS = [
-  { id: '1', title: 'Harry Potter', price: '₹105.77', image: 'https://m.media-amazon.com/images/I/81q77Q39nEL._AC_UF1000,1000_QL80_.jpg' },
-  { id: '2', title: "Don't Make me think", price: '₹235.17', image: 'https://m.media-amazon.com/images/I/81q77Q39nEL._AC_UF1000,1000_QL80_.jpg' },
-  { id: '3', title: 'Harry Potter', price: '₹105.77', image: 'https://m.media-amazon.com/images/I/81q77Q39nEL._AC_UF1000,1000_QL80_.jpg' },
-  { id: '4', title: "Don't Make me think", price: '₹235.17', image: 'https://m.media-amazon.com/images/I/81q77Q39nEL._AC_UF1000,1000_QL80_.jpg' },
-
-];
-
-const OLD_BOOKS = [
-  { id: '1', title: 'Python Programming', price: '₹105.77', image: 'https://m.media-amazon.com/images/I/81q77Q39nEL._AC_UF1000,1000_QL80_.jpg' },
-  { id: '2', title: 'Effective Java', price: '₹477.23', image: 'https://m.media-amazon.com/images/I/81q77Q39nEL._AC_UF1000,1000_QL80_.jpg' },
-  { id: '3', title: 'Python Programming', price: '₹105.77', image: 'https://m.media-amazon.com/images/I/81q77Q39nEL._AC_UF1000,1000_QL80_.jpg' },
-  { id: '4', title: 'Effective Java', price: '₹477.23', image: 'https://m.media-amazon.com/images/I/81q77Q39nEL._AC_UF1000,1000_QL80_.jpg' },
-];
 
 export default function Home() {
   const router = useRouter();
-  const { toggleWishlist, isInWishlist } = useWishlist();
+  const { toggleWishlist, isInWishlist, wishlist } = useWishlist();
+  const { cartItems, addToCart, cartItemCount } = useCart();
+  const [books, setBooks] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
-  const filteredNewBooks = NEW_BOOKS.filter(book => book.title.toLowerCase().includes(searchQuery.toLowerCase()));  
-  const filteredOldBooks = OLD_BOOKS.filter(book => book.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const unreadNotifications = 3; // Mock value for unread notifications
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const data = await getBooks();
+        setBooks(data);
+      } catch (error) {
+        console.error('Failed to fetch books', error);
+      }
+    };
+    fetchBooks();
+  }, []);
+
+  const filteredNewBooks = books.filter(book => book.condition === 'New' && book.title.toLowerCase().includes(searchQuery.toLowerCase()));  
+  const filteredOldBooks = books.filter(book => book.condition === 'Old' && book.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const handleLogout = async () => {
     try {
@@ -41,25 +46,38 @@ export default function Home() {
     }
   };
 
-  const renderBookCard = (book) => (
-    <View key={book.id} style={styles.bookCard}>
-      <Pressable 
-        style={[styles.bookmarkBadge, isInWishlist(book.id) && styles.bookmarkBadgeActive]}
-        onPress={() => toggleWishlist(book)}
-      >
-        <Ionicons name={isInWishlist(book.id) ? "bookmark" : "bookmark-outline"} size={16} color={isInWishlist(book.id) ? "#0e6b56" : "#fff"} />
-      </Pressable>
-      <Image source={{ uri: book.image }} style={styles.bookImage} resizeMode="contain" />
-      <View style={styles.bookInfo}>
-        <Text style={styles.bookTitle} numberOfLines={1}>{book.title}</Text>
-        <Text style={styles.bookPrice}>Price: <Text style={styles.priceBold}>{book.price}</Text></Text>
-        <Pressable style={styles.addToCartBtn}>
-          <Text style={styles.addToCartText}>Add to cart</Text>
-          <Ionicons name="cart-outline" size={18} color="#0e6b56" />
+  const renderBookCard = (book) => {
+    const isBookInCart = cartItems.some(item => item.bookId === book.id);
+    
+    return (
+      <View key={book.id} style={styles.bookCard}>
+        <Pressable 
+          style={[styles.bookmarkBadge, isInWishlist(book.id) && styles.bookmarkBadgeActive]}
+          onPress={() => toggleWishlist(book)}
+        >
+          <Ionicons name={isInWishlist(book.id) ? "bookmark" : "bookmark-outline"} size={16} color={isInWishlist(book.id) ? "#0e6b56" : "#fff"} />
         </Pressable>
+        <Image source={{ uri: book.image }} style={styles.bookImage} resizeMode="contain" />
+        <View style={styles.bookInfo}>
+          <Text style={styles.bookTitle} numberOfLines={1}>{book.title}</Text>
+          <Text style={styles.bookPrice}>Price: <Text style={styles.priceBold}>₹{book.price}</Text></Text>
+          <Pressable 
+            style={[styles.addToCartBtn, isBookInCart && styles.addToCartBtnActive]} 
+            onPress={() => isBookInCart ? router.push('/cart') : addToCart(book, 1)}
+          >
+            <Text style={[styles.addToCartText, isBookInCart && styles.addToCartTextActive]}>
+              {isBookInCart ? "Go to cart" : "Add to cart"}
+            </Text>
+            <Ionicons 
+              name={isBookInCart ? "arrow-forward-outline" : "cart-outline"} 
+              size={18} 
+              color={isBookInCart ? "#fff" : "#0e6b56"} 
+            />
+          </Pressable>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -80,23 +98,43 @@ export default function Home() {
           <View style={styles.headerRight}>
             <Pressable style={styles.headerIcon} onPress={() => router.push('/wishlist')}>
               <Ionicons name="bookmark-outline" size={26} color="#333" />
+              {wishlist.length > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{wishlist.length}</Text>
+                </View>
+              )}
             </Pressable>
             <Pressable style={styles.headerIcon}>
               <Ionicons name="notifications-outline" size={26} color="#333" />
+              {unreadNotifications > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{unreadNotifications}</Text>
+                </View>
+              )}
             </Pressable>
           </View>
         </View>
 
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <TextInput 
-            style={styles.searchInput} 
-            placeholder="Search your books..." 
-            placeholderTextColor="#999" 
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          <Ionicons name="search-outline" size={22} color="#0e6b56" style={styles.searchIcon} />
+        {/* Search Bar and Cart */}
+        <View style={styles.searchRow}>
+          <View style={styles.searchContainer}>
+            <TextInput 
+              style={styles.searchInput} 
+              placeholder="Search your books..." 
+              placeholderTextColor="#999" 
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            <Ionicons name="search-outline" size={22} color="#0e6b56" style={styles.searchIcon} />
+          </View>
+          <Pressable style={styles.cartIconWrapper} onPress={() => router.push('/cart')}>
+            <Ionicons name="cart-outline" size={28} color="#333" />
+            {cartItemCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{cartItemCount}</Text>
+              </View>
+            )}
+          </Pressable>
         </View>
 
         {/* Categories */}
@@ -191,17 +229,47 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginLeft: 15,
+    position: 'relative',
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 25,
   },
   searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: '#0e6b56',
     borderRadius: 8,
-    marginHorizontal: 20,
     paddingHorizontal: 15,
     height: 50,
-    marginBottom: 25,
+  },
+  cartIconWrapper: {
+    marginLeft: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#d9534f',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#fff',
+  },
+  cartBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   searchInput: {
     flex: 1,
@@ -320,10 +388,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     gap: 5,
   },
+  addToCartBtnActive: {
+    backgroundColor: '#0e6b56',
+  },
   addToCartText: {
     color: '#0e6b56',
     fontSize: 12,
     fontWeight: '600',
+  },
+  addToCartTextActive: {
+    color: '#fff',
   },
   bottomTabBar: {
     position: 'absolute',

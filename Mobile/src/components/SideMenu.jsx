@@ -1,10 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, Platform, Modal, ScrollView, Animated, Easing } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const { width } = Dimensions.get('window');
 
 export default function SideMenu({ visible, onClose, router, handleLogout }) {
+  const { cartItemCount } = useCart();
+  const { wishlist } = useWishlist();
+  const unreadNotifications = 3; // Mock value
+  
   const [showModal, setShowModal] = useState(visible);
   const slideAnim = useRef(new Animated.Value(-width * 0.75)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -79,11 +85,21 @@ export default function SideMenu({ visible, onClose, router, handleLogout }) {
             <Pressable style={styles.menuItem} onPress={() => navigateAndClose('/cart')}>
               <Ionicons name="cart-outline" size={24} color="#555" />
               <Text style={styles.menuItemText}>My Cart</Text>
+              {cartItemCount > 0 && (
+                <View style={styles.menuBadge}>
+                  <Text style={styles.menuBadgeText}>{cartItemCount}</Text>
+                </View>
+              )}
             </Pressable>
 
             <Pressable style={styles.menuItem} onPress={() => navigateAndClose('/wishlist')}>
               <Ionicons name="heart-outline" size={24} color="#555" />
               <Text style={styles.menuItemText}>My Wishlist</Text>
+              {wishlist?.length > 0 && (
+                <View style={styles.menuBadge}>
+                  <Text style={styles.menuBadgeText}>{wishlist.length}</Text>
+                </View>
+              )}
             </Pressable>
 
             <Pressable style={styles.menuItem} onPress={() => navigateAndClose('/address')}>
@@ -96,6 +112,11 @@ export default function SideMenu({ visible, onClose, router, handleLogout }) {
             <Pressable style={styles.menuItem} onPress={() => navigateAndClose('/notifications')}>
               <Ionicons name="notifications-outline" size={24} color="#555" />
               <Text style={styles.menuItemText}>Notifications</Text>
+              {unreadNotifications > 0 && (
+                <View style={styles.menuBadge}>
+                  <Text style={styles.menuBadgeText}>{unreadNotifications}</Text>
+                </View>
+              )}
             </Pressable>
 
             <Pressable style={styles.menuItem} onPress={() => navigateAndClose('/offers')}>
@@ -176,10 +197,24 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   menuItemText: {
+    flex: 1,
     fontSize: 16,
     color: '#333',
     marginLeft: 15,
     fontWeight: '500',
+  },
+  menuBadge: {
+    backgroundColor: '#d9534f',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   menuDivider: {
     height: 1,
